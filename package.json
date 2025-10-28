@@ -6,21 +6,40 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "node -r dotenv/config scripts/seed-admin.mjs",
+    "seed:data": "node scripts/seed-data.mjs"
   },
   "dependencies": {
+    "@tinymce/tinymce-react": "^6.3.0",
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.8.0",
+    "dotenv": "^17.2.3",
+    "jsdom": "^27.0.1",
+    "marked": "^16.4.1",
+    "mongoose": "^8.19.2",
+    "next": "16.0.0",
+    "next-auth": "^4.24.12",
+    "next-seo": "^7.0.1",
+    "next-sitemap": "^4.2.3",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "next": "16.0.0"
+    "react-icons": "^5.5.0",
+    "react-markdown": "^10.1.0",
+    "tinymce": "^8.2.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^6.0.0",
+    "@types/jsdom": "^27.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
-    "eslint-config-next": "16.0.0"
+    "eslint-config-next": "16.0.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.20.6",
+    "typescript": "^5"
   }
 }
