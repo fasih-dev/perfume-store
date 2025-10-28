@@ -8,10 +8,23 @@ import { blogPostingJsonLd, jsonLdScript } from '@/lib/seo';
 
 type Params = { params: Promise<{ slug: string }> };
 
+interface BlogData {
+	_id: { toString(): string } | string;
+	title?: string;
+	slug?: string;
+	content?: string;
+	contentType?: 'markdown' | 'html';
+	status?: string;
+	publishedAt?: string | Date;
+	featuredImage?: string;
+	seoTitle?: string;
+	seoDescription?: string;
+}
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
 	const { slug } = await params;
 	await connectToDatabase();
-	const blog = await Blog.findOne({ slug }).lean();
+	const blog = await Blog.findOne({ slug }).lean() as BlogData | null;
 	if (!blog) return { title: 'Blog not found' };
 	return {
 		title: blog.seoTitle || blog.title,
@@ -25,7 +38,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function BlogPostPage({ params }: Params) {
 	const { slug } = await params;
 	await connectToDatabase();
-	const blog = await Blog.findOne({ slug }).lean();
+	const blog = await Blog.findOne({ slug }).lean() as BlogData | null;
 	
 	if (!blog) {
 		return (
@@ -46,15 +59,15 @@ export default async function BlogPostPage({ params }: Params) {
 				<Breadcrumbs items={[
 					{ label: 'Home', href: '/' }, 
 					{ label: 'Journal', href: '/blogs' }, 
-					{ label: blog.title }
+					{ label: blog.title || 'Article' }
 				]} />
 
 				<script 
 					type="application/ld+json" 
 					dangerouslySetInnerHTML={jsonLdScript(blogPostingJsonLd({ 
-						title: blog.title, 
+						title: blog.title || 'Article', 
 						description: blog.seoDescription || blog.content?.slice(0, 120), 
-						url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/blogs/${blog.slug}`, 
+						url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/blogs/${blog.slug || 'unknown'}`, 
 						image: blog.featuredImage 
 					}))} 
 				/>
@@ -64,7 +77,7 @@ export default async function BlogPostPage({ params }: Params) {
 					<div className="relative aspect-video bg-primary-100 rounded-2xl overflow-hidden shadow-xl mb-8 mt-8">
 						<Image 
 							src={blog.featuredImage} 
-							alt={blog.title} 
+							alt={blog.title || 'Blog article'} 
 							fill 
 							sizes="100vw" 
 							className="object-cover" 
@@ -76,17 +89,19 @@ export default async function BlogPostPage({ params }: Params) {
 				{/* Article Header */}
 				<header className="mb-8">
 					<h1 className="font-serif text-4xl md:text-5xl font-bold text-primary-900 mb-4">
-						{blog.title}
+						{blog.title || 'Article'}
 					</h1>
-					<div className="flex items-center gap-4 text-sm text-primary-600">
-						<time dateTime={blog.publishedAt}>
-							{new Date(blog.publishedAt).toLocaleDateString('en-US', { 
-								year: 'numeric', 
-								month: 'long', 
-								day: 'numeric' 
-							})}
-						</time>
-					</div>
+					{blog.publishedAt && (
+						<div className="flex items-center gap-4 text-sm text-primary-600">
+							<time dateTime={typeof blog.publishedAt === 'string' ? blog.publishedAt : blog.publishedAt.toISOString()}>
+								{new Date(blog.publishedAt).toLocaleDateString('en-US', { 
+									year: 'numeric', 
+									month: 'long', 
+									day: 'numeric' 
+								})}
+							</time>
+						</div>
+					)}
 				</header>
 
 			{/* Article Content */}
@@ -94,11 +109,11 @@ export default async function BlogPostPage({ params }: Params) {
 				{blog.contentType === 'html' ? (
 					<div 
 						className="contents" 
-						dangerouslySetInnerHTML={{ __html: blog.content }} 
+						dangerouslySetInnerHTML={{ __html: blog.content || '' }} 
 					/>
 				) : (
 					<ReactMarkdown>
-						{blog.content}
+						{blog.content || ''}
 					</ReactMarkdown>
 				)}
 			</div>

@@ -7,13 +7,26 @@ import { jsonLdScript, productJsonLd } from '@/lib/seo';
 
 type Params = { params: Promise<{ slug: string }> };
 
+interface ProductData {
+	_id: { toString(): string } | string;
+	name?: string;
+	slug?: string;
+	description?: string;
+	price?: number;
+	stock?: number;
+	images?: string[];
+	keywords?: string[];
+	seoTitle?: string;
+	seoDescription?: string;
+}
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
 	const { slug } = await params;
 	await connectToDatabase();
-	const product = await Product.findOne({ slug }).lean();
+	const product = await Product.findOne({ slug }).lean() as ProductData | null;
 	if (!product) return { title: 'Product not found' };
 	return {
-		title: product.seoTitle || product.name,
+		title: product.seoTitle || product.name || 'Product',
 		description: product.seoDescription || (product.description || '').slice(0, 150),
 		openGraph: { images: product.images?.slice(0, 1) || [] },
 	};
@@ -22,7 +35,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function ProductPage({ params }: Params) {
 	const { slug } = await params;
 	await connectToDatabase();
-	const product = await Product.findOne({ slug }).lean();
+	const product = await Product.findOne({ slug }).lean() as ProductData | null;
 	
 	if (!product) {
 		return (
@@ -43,16 +56,16 @@ export default async function ProductPage({ params }: Params) {
 				<Breadcrumbs items={[
 					{ label: 'Home', href: '/' }, 
 					{ label: 'Fragrances', href: '/products' }, 
-					{ label: product.name }
+					{ label: product.name || 'Product' }
 				]} />
 
 				<script 
 					type="application/ld+json" 
 					dangerouslySetInnerHTML={jsonLdScript(productJsonLd({ 
-						name: product.name, 
+						name: product.name || 'Product', 
 						description: product.seoDescription || product.description, 
 						images: product.images, 
-						url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/products/${product.slug}` 
+						url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/products/${product.slug || 'unknown'}` 
 					}))} 
 				/>
 
@@ -63,7 +76,7 @@ export default async function ProductPage({ params }: Params) {
 							{product.images?.[0] ? (
 								<Image 
 									src={product.images[0]} 
-									alt={product.name} 
+									alt={product.name || 'Product'} 
 									fill 
 									sizes="(max-width:768px) 100vw, 50vw" 
 									className="object-cover" 
@@ -81,15 +94,15 @@ export default async function ProductPage({ params }: Params) {
 					<div className="space-y-6">
 						<div>
 							<h1 className="font-serif text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-								{product.name}
+								{product.name || 'Product'}
 							</h1>
 							<div className="flex items-center gap-4 mb-6">
 								<span className="text-4xl font-bold text-primary-600">
 									${(product.price || 0).toFixed(2)}
 								</span>
-								{product.stock > 0 ? (
+								{(product.stock || 0) > 0 ? (
 									<span className="px-4 py-1 bg-accent-100 text-accent-800 rounded-full text-sm font-semibold">
-										In Stock ({product.stock} available)
+										In Stock ({product.stock || 0} available)
 									</span>
 								) : (
 									<span className="px-4 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
@@ -101,7 +114,7 @@ export default async function ProductPage({ params }: Params) {
 
 						<div className="prose prose-lg max-w-none">
 							<p className="text-gray-700 leading-relaxed text-lg">
-								{product.description}
+								{product.description || 'No description available'}
 							</p>
 						</div>
 
@@ -144,10 +157,10 @@ export default async function ProductPage({ params }: Params) {
 
 						<div className="pt-6">
 							<button 
-								disabled={product.stock === 0}
+								disabled={(product.stock || 0) === 0}
 								className="w-full md:w-auto px-8 py-4 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:transform-none"
 							>
-								{product.stock > 0 ? 'Add to Cart (Coming Soon)' : 'Out of Stock'}
+								{(product.stock || 0) > 0 ? 'Add to Cart (Coming Soon)' : 'Out of Stock'}
 							</button>
 						</div>
 					</div>
