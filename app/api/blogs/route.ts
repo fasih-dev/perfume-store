@@ -3,9 +3,14 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { Blog } from '@/lib/models/Blog';
 
 export async function GET() {
-	await connectToDatabase();
-	const blogs = await Blog.find({ status: 'published' }).sort({ publishedAt: -1 });
-	return NextResponse.json(blogs);
+	try {
+		await connectToDatabase();
+		const blogs = await Blog.find({ status: 'published' }).sort({ publishedAt: -1 });
+		return NextResponse.json(blogs);
+	} catch (e: any) {
+		console.error('Error fetching blogs:', e);
+		return NextResponse.json({ error: e.message || 'Failed to fetch blogs' }, { status: 400 });
+	}
 }
 
 export async function POST(request: NextRequest) {
